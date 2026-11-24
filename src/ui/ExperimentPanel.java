@@ -735,4 +735,4 @@ public class ExperimentPanel extends JPanel {
 
         worker.execute();
     }
-}s
+}
