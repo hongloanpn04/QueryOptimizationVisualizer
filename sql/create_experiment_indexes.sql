@@ -1,8 +1,4 @@
-/*
-  Chay trong database QueryOptimizationDB (hoac database ma project dang ket noi).
-  Cac Index nay phuc vu rieng cho bai thuc nghiem QOV.
-  Script khong xoa Index cu va khong thay doi khoa chinh/foreign key.
-*/
+
 
 IF NOT EXISTS (
     SELECT 1 FROM sys.indexes
