@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import service.QueryExecutionService;
 import service.ActualPlanService;
 import service.IndexMetadataService;
+import service.ExperimentComparisonService;
 
 public class ExperimentPanel extends JPanel {
 
@@ -21,8 +22,10 @@ public class ExperimentPanel extends JPanel {
     private QueryExecutionService queryService;
     private IndexMetadataService indexMetadataService;
     private ActualPlanService actualPlanService;
+    private ExperimentComparisonService experimentComparisonService;
 
     public ExperimentPanel() {
+    experimentComparisonService =new ExperimentComparisonService();
 
     queryService = new QueryExecutionService();
     indexMetadataService = new IndexMetadataService();
@@ -30,8 +33,10 @@ public class ExperimentPanel extends JPanel {
     actualPlanService = new ActualPlanService();
 
     setLayout(new BorderLayout(10, 10));
+        
 
     initComponents();
+        
     }
 
     private void initComponents() {
