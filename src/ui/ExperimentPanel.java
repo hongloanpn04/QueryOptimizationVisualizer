@@ -370,8 +370,44 @@ public class ExperimentPanel extends JPanel {
 
         worker.execute();
     }
-    
     private void compareIndexMethods() {
+    btnCompare.setEnabled(false);
+    btnExecute.setEnabled(false);
+    btnCheckIndex.setEnabled(false);
+    cboQuery.setEnabled(false);
+    txtResult.setText("Dang chay thuc nghiem...");
+
+    int selectedIndex = cboQuery.getSelectedIndex();
+
+    SwingWorker<String, Void> worker = new SwingWorker<>() {
+        @Override
+        protected String doInBackground() {
+            try {
+                return experimentComparisonService.runExperiment(selectedIndex);
+            } catch (Exception ex) {
+                return "LOI THUC NGHIEM:\n" + ex.getMessage();
+            }
+        }
+
+        @Override
+        protected void done() {
+            try {
+                txtResult.setText(get());
+                txtResult.setCaretPosition(0);
+            } catch (Exception ex) {
+                txtResult.setText("Loi: " + ex.getMessage());
+            } finally {
+                btnCompare.setEnabled(true);
+                btnExecute.setEnabled(true);
+                btnCheckIndex.setEnabled(true);
+                cboQuery.setEnabled(true);
+            }
+        }
+    };
+    worker.execute();
+}
+    
+    private void compareSsnMethods( {
 
         btnCompare.setEnabled(false);
         btnExecute.setEnabled(false);
