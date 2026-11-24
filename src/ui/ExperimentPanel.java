@@ -71,9 +71,9 @@ public class ExperimentPanel extends JPanel {
         
         // Nút kiểm tra Index
         btnCheckIndex = new JButton("Kiem tra Index");
-
-        // Nút so sánh Seek và Scan
-        btnCompare = new JButton("So sanh Seek va Scan");
+        
+        // So sanh cac pp
+        btnCompare = new JButton("So sanh phuong phap");
 
         // Panel chứa hai nút
         JPanel buttonPanel = new JPanel(
