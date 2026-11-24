@@ -1,5 +1,8 @@
 
+USE QueryOptimizationDB;
+GO
 
+-- 1. Tao Index tren Dno
 IF NOT EXISTS (
     SELECT 1 FROM sys.indexes
     WHERE object_id = OBJECT_ID(N'dbo.EMPLOYEE')
@@ -11,6 +14,7 @@ BEGIN
 END;
 GO
 
+-- 2. Tao Index tren Sex
 IF NOT EXISTS (
     SELECT 1 FROM sys.indexes
     WHERE object_id = OBJECT_ID(N'dbo.EMPLOYEE')
@@ -22,18 +26,19 @@ BEGIN
 END;
 GO
 
-IF NOT EXISTS (
+-- 3. Xoa Composite Index neu da tao truoc do
+IF EXISTS (
     SELECT 1 FROM sys.indexes
     WHERE object_id = OBJECT_ID(N'dbo.EMPLOYEE')
       AND name = N'IX_QOV_EMPLOYEE_Dno_Sex_Salary'
 )
 BEGIN
-    CREATE NONCLUSTERED INDEX IX_QOV_EMPLOYEE_Dno_Sex_Salary
-    ON dbo.EMPLOYEE(Dno, Sex, Salary);
+    DROP INDEX IX_QOV_EMPLOYEE_Dno_Sex_Salary
+    ON dbo.EMPLOYEE;
 END;
 GO
 
--- Kiem tra cac Index vua tao
+-- 4. Kiem tra cac Index cua demo
 SELECT
     i.name AS IndexName,
     i.type_desc AS IndexType,
