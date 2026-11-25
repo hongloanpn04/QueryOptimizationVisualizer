@@ -24,12 +24,13 @@ import service.ExperimentComparisonService;
 import service.IndexMetadataService;
 import service.QueryExecutionService;
 
-/** Tab thuc nghiem SQL Server - chon truy van, so sanh va kiem tra Index lien quan. */
+/** Tab thuc nghiem SQL Server. */
 public class ExperimentPanel extends JPanel {
 
     private final QueryExecutionService queryService = new QueryExecutionService();
     private final IndexMetadataService indexMetadataService = new IndexMetadataService();
-    private final ExperimentComparisonService experimentComparisonService = new ExperimentComparisonService();
+    private final ExperimentComparisonService experimentComparisonService =
+            new ExperimentComparisonService();
 
     private JComboBox<String> cboQuery;
     private JTextArea txtSQL;
@@ -57,10 +58,10 @@ public class ExperimentPanel extends JPanel {
 
         btnCheckIndex = new JButton("Kiem tra Index");
         btnCompare = new JButton("So sanh phuong phap");
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
-        buttonPanel.add(btnCheckIndex);
-        buttonPanel.add(btnCompare);
-        topPanel.add(buttonPanel, BorderLayout.EAST);
+        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
+        buttons.add(btnCheckIndex);
+        buttons.add(btnCompare);
+        topPanel.add(buttons, BorderLayout.EAST);
         add(topPanel, BorderLayout.NORTH);
 
         txtSQL = new JTextArea(4, 50);
@@ -76,7 +77,8 @@ public class ExperimentPanel extends JPanel {
         JScrollPane sqlScroll = new JScrollPane(txtSQL);
         sqlScroll.setPreferredSize(new Dimension(0, 130));
         JScrollPane resultScroll = new JScrollPane(txtResult);
-        resultScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+        resultScroll.setVerticalScrollBarPolicy(
+                ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 
         btnExecute = new JButton("Thuc thi truy van");
         JPanel sqlPanel = new JPanel(new BorderLayout(5, 5));
@@ -119,6 +121,11 @@ public class ExperimentPanel extends JPanel {
         cboQuery.setEnabled(!busy);
     }
 
+    @FunctionalInterface
+    private interface Task {
+        String run() throws Exception;
+    }
+
     private void runTask(String waitingMessage, Task task) {
         setBusy(true);
         txtResult.setText(waitingMessage);
@@ -131,6 +138,7 @@ public class ExperimentPanel extends JPanel {
                     return "LOI:\n" + ex.getMessage();
                 }
             }
+
             @Override
             protected void done() {
                 try {
@@ -143,11 +151,6 @@ public class ExperimentPanel extends JPanel {
                 }
             }
         }.execute();
-    }
-
-    @FunctionalInterface
-    private interface Task {
-        String run() throws Exception;
     }
 
     private void executeQuery() {
@@ -174,100 +177,144 @@ public class ExperimentPanel extends JPanel {
                 () -> experimentComparisonService.runExperiment(selectedIndex));
     }
 
-    /**
-     * Chi hien thi Index lien quan den truy van dang chon.
-     * Moi Index duoc gop thanh mot khoi, khong lap lai theo tung cot.
-     */
     private void checkIndexes() {
         final int selectedIndex = cboQuery.getSelectedIndex();
-        runTask("Dang kiem tra Index lien quan...", () -> buildIndexReport(selectedIndex));
+        runTask("Dang kiem tra Index lien quan...",
+                () -> buildIndexReport(selectedIndex));
     }
 
     private String buildIndexReport(int selectedIndex) throws SQLException {
         StringBuilder out = new StringBuilder();
         out.append("KIEM TRA INDEX THEO TRUY VAN\n");
         out.append("============================================================\n");
-        out.append("Truy van: ").append(cboQuery.getItemAt(selectedIndex)).append("\n\n");
+        out.append("Truy van: ").append(cboQuery.getItemAt(selectedIndex))
+           .append("\n\n");
 
-        // Index tren EMPLOYEE theo dung pham vi thuc nghiem S1-S7.
         String employeeColumn;
         switch (selectedIndex) {
-            case 0:
-                employeeColumn = "Ssn";
-
-                break;
-            case 1:
-                employeeColumn = "Dno";
-
-                break;
-            case 2:
-                employeeColumn = "Sex";
-
-                break;
-            case 3:
-                employeeColumn = "Dno";
-
-                break;
-            case 4:
-                employeeColumn = "Dno";
-
-                break;
-            default:
-                throw new IllegalArgumentException("Loai truy van khong hop le.");
+            case 0: employeeColumn = "Ssn"; break;
+            case 1: employeeColumn = "Dno"; break;
+            case 2: employeeColumn = "Sex"; break;
+            case 3: employeeColumn = "Dno"; break;
+            case 4: employeeColumn = "Dno"; break;
+            default: throw new IllegalArgumentException("Loai truy van khong hop le.");
         }
-        appendIndexes(out, "EMPLOYEE", employeeColumn);
+
+        appendIndexes(out, "EMPLOYEE", employeeColumn, selectedIndex);
         if (selectedIndex == 4) {
-            appendIndexes(out, "DEPARTMENT", "Dnumber");
+            appendIndexes(out, "DEPARTMENT", "Dnumber", selectedIndex);
         }
-        if (selectedIndex == 3) {
-            out.append("\nDieu kien con lai: Salary > 30000 va Sex = 'F'.\n");
-            out.append("Chi kiem tra Index Dno; khong dung Composite Index trong demo S7.\n");
-        }
+
         out.append("\nGHI CHU\n");
-        out.append("- Day la Index co the ho tro truy van, KHONG phai Index chac chan duoc dung.\n");
-        out.append("- SQL Server co the chon Scan thay vi Index Seek.\n");
-        out.append("- Xem 'So sanh phuong phap' va Actual Execution Plan de biet cach truy xuat thuc te.\n");
-        out.append("- Cac Index khong lien quan den truy van nay duoc an khoi danh sach.\n");
+        out.append("- CLUSTERED: Du lieu goc duoc to chuc theo khoa Index.\n");
+        out.append("  Vi du: tim theo Ssn co the lay truc tiep dong nhan vien.\n");
+        out.append("- NONCLUSTERED: Giong muc luc rieng, giup tim khoa\n");
+        out.append("  va vi tri du lieu. Vi du: Dno dan den cac Ssn tuong ung.\n");
+        out.append("- Co Index khong co nghia SQL Server chac chan dung Index do.\n");
+        out.append("- Index Seek: Tim den vung khoa can truy xuat.\n");
+        out.append("- Index Scan: Quet cac muc cua Index.\n");
+        out.append("- Nhan 'So sanh phuong phap' de xem Actual Plan va chi phi.\n");
+        out.append("- Chi hien thi Index lien quan den truy van dang chon.\n");
         return out.toString();
     }
 
-    private void appendIndexes(StringBuilder out, String tableName, String keyColumn)
-            throws SQLException {
-        List<IndexMetadataService.IndexInfo> rows = indexMetadataService.getIndexes(tableName);
-        Map<String, List<IndexMetadataService.IndexInfo>> byName = new LinkedHashMap<>();
+    /** Chi lay Index co cot khoa dau tien la cot can xem; gop cac cot theo ten Index. */
+    private void appendIndexes(StringBuilder out, String tableName,
+                               String keyColumn, int selectedIndex) throws SQLException {
+        List<IndexMetadataService.IndexInfo> rows =
+                indexMetadataService.getIndexes(tableName);
+        Map<String, List<IndexMetadataService.IndexInfo>> grouped =
+                new LinkedHashMap<>();
+
         for (IndexMetadataService.IndexInfo row : rows) {
-            // Loc theo cot khoa DAU TIEN; khong tinh mot cot nam sau trong composite.
-            if (row.getKeyPosition() == 1 && row.getColumnName().equalsIgnoreCase(keyColumn)) {
-                byName.putIfAbsent(row.getIndexName(), new ArrayList<>());
+            if (row.getKeyPosition() == 1
+                    && row.getColumnName().equalsIgnoreCase(keyColumn)) {
+                grouped.putIfAbsent(row.getIndexName(), new ArrayList<>());
             }
         }
         for (IndexMetadataService.IndexInfo row : rows) {
-            List<IndexMetadataService.IndexInfo> list = byName.get(row.getIndexName());
-            if (list != null) list.add(row);
+            List<IndexMetadataService.IndexInfo> cols = grouped.get(row.getIndexName());
+            if (cols != null) cols.add(row);
         }
-        // S7: chi show Index don tren Dno, khong dua composite vao danh sach.
+        // Demo chi dung Index don tren Dno (khong liet ke composite).
         if ("EMPLOYEE".equals(tableName) && "Dno".equalsIgnoreCase(keyColumn)) {
-            byName.entrySet().removeIf(e -> e.getValue().size() != 1);
+            grouped.entrySet().removeIf(e -> e.getValue().size() != 1);
         }
-        out.append("BANG ").append(tableName).append(" - COT ").append(keyColumn).append("\n");
+
+        out.append("BANG ").append(tableName).append(" - COT ")
+           .append(keyColumn).append("\n");
         out.append("------------------------------------------------------------\n");
-        if (byName.isEmpty()) {
-            out.append("Khong tim thay Index co cot khoa dau tien la ")
+        if (grouped.isEmpty()) {
+            out.append("Khong tim thay Index phu hop voi cot khoa dau tien ")
                .append(keyColumn).append(".\n\n");
             return;
         }
-        for (Map.Entry<String, List<IndexMetadataService.IndexInfo>> entry : byName.entrySet()) {
-            List<IndexMetadataService.IndexInfo> columns = entry.getValue();
-            columns.sort(Comparator.comparingInt(IndexMetadataService.IndexInfo::getKeyPosition));
-            IndexMetadataService.IndexInfo first = columns.get(0);
+
+        for (Map.Entry<String, List<IndexMetadataService.IndexInfo>> e : grouped.entrySet()) {
+            List<IndexMetadataService.IndexInfo> cols = e.getValue();
+            cols.sort(Comparator.comparingInt(IndexMetadataService.IndexInfo::getKeyPosition));
+            IndexMetadataService.IndexInfo first = cols.get(0);
             List<String> names = new ArrayList<>();
-            for (IndexMetadataService.IndexInfo col : columns) names.add(col.getColumnName());
+            for (IndexMetadataService.IndexInfo col : cols) {
+                names.add(col.getColumnName());
+            }
+
             out.append("Ten Index : ").append(first.getIndexName()).append('\n');
             out.append("Loai      : ").append(first.getIndexType()).append('\n');
             out.append("Unique    : ").append(first.isUnique() ? "Co" : "Khong").append('\n');
             out.append("Cot khoa  : ").append(String.join(", ", names)).append('\n');
-            out.append("------------------------------------------------------------\n");
+            out.append("\nGIAI THICH\n");
+            appendIndexExplanation(out, tableName, keyColumn, first.getIndexType(),
+                    selectedIndex);
+            out.append("------------------------------------------------------------\n\n");
         }
-        out.append('\n');
+    }
+
+    /** Chi giai thich loai Index va vai tro trong truy van, khong giai thich UNIQUE. */
+    private void appendIndexExplanation(StringBuilder out, String tableName,
+                                        String keyColumn, String indexType,
+                                        int queryIndex) {
+        if ("CLUSTERED".equalsIgnoreCase(indexType)) {
+            out.append("- CLUSTERED: Du lieu goc duoc to chuc theo khoa ")
+               .append(keyColumn).append(".\n");
+        } else if ("NONCLUSTERED".equalsIgnoreCase(indexType)) {
+            out.append("- NONCLUSTERED: Giong muc luc rieng, giup tim\n")
+               .append("  gia tri khoa va xac dinh noi chua du lieu goc.\n");
+        }
+
+        if ("DEPARTMENT".equals(tableName)) {
+            out.append("- Vai tro: Tim phong ban theo Dnumber de ghep voi\n")
+               .append("  EMPLOYEE.Dno trong truy van JOIN.\n");
+            return;
+        }
+
+        switch (queryIndex) {
+            case 0:
+                out.append("- Vai tro: Tim nhan vien co Ssn = 10001.\n")
+                   .append("  Neu dung Clustered Index Seek, SQL Server co the\n")
+                   .append("  den ngay dong du lieu theo ma Ssn.\n");
+                break;
+            case 1:
+                out.append("- Vai tro: Tim cac nhan vien co Dno = 5.\n")
+                   .append("  Index Dno co the giup tim cac ma Ssn tuong ung,\n")
+                   .append("  roi tra cuu dong day du khi can SELECT *.\n");
+                break;
+            case 2:
+                out.append("- Vai tro: Tim cac nhan vien co Sex = 'F'.\n")
+                   .append("  Neu qua nhieu nhan vien phu hop, quet bang\n")
+                   .append("  co the nhanh hon truy cap qua Index.\n");
+                break;
+            case 3:
+                out.append("- Vai tro S7: Dung Index Dno tim nhan vien phong 5,\n")
+                   .append("  sau do kiem tra Salary > 30000 va Sex = 'F'.\n")
+                   .append("  Khong su dung Composite Index trong demo nay.\n");
+                break;
+            case 4:
+                out.append("- Vai tro: Ho tro tim nhan vien theo Dno de ghep\n")
+                   .append("  voi khoa Dnumber cua bang DEPARTMENT.\n");
+                break;
+            default:
+                break;
+        }
     }
 }

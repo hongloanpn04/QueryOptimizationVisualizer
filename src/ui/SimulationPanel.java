@@ -12,8 +12,8 @@ import java.util.List;
 
 /**
  * Mo phong ly thuyet S1-S7.
- * S1-S6: uoc luong chi phi I/O theo cong thuc.
- * S7: minh hoa quy trinh AND su dung mot Index tren Dno, khong dat cong thuc S7.
+ * S1-S6: uoc luong I/O theo cong thuc, s duoc tu dong uoc luong.
+ * S7: minh hoa AND voi mot Index Dno; khong co cong thuc S7 rieng.
  */
 public class SimulationPanel extends JPanel {
 
@@ -26,6 +26,7 @@ public class SimulationPanel extends JPanel {
     private JTable resultTable;
     private DefaultTableModel tableModel;
     private JLabel lblRecommendation;
+    private JLabel lblSExplanation;
     private JButton btnCalculate;
 
     private JTextArea txtS7Steps;
@@ -33,7 +34,6 @@ public class SimulationPanel extends JPanel {
     private CardLayout resultCardLayout;
 
     private final CostCalculator calculator;
-
     private static final int S7_QUERY = 4;
 
     public SimulationPanel() {
@@ -75,22 +75,26 @@ public class SimulationPanel extends JPanel {
         inputPanel.add(new JLabel(""));
         inputPanel.add(btnCalculate);
 
+        // Giai thich ngan cach uoc luong s, khong yeu cau nguoi dung nhap %.
+        lblSExplanation = new JLabel(" ");
+        lblSExplanation.setFont(new Font("Arial", Font.PLAIN, 12));
+        lblSExplanation.setBorder(BorderFactory.createEmptyBorder(6, 10, 6, 10));
+
         txtSQLExample = new JTextArea(3, 50);
         txtSQLExample.setEditable(false);
         txtSQLExample.setFont(new Font("Consolas", Font.PLAIN, 13));
-        txtSQLExample.setBorder(
-                BorderFactory.createTitledBorder("Truy van SQL minh hoa"));
+        txtSQLExample.setBorder(BorderFactory.createTitledBorder("Truy van SQL minh hoa"));
         JScrollPane sqlScroll = new JScrollPane(txtSQLExample);
         sqlScroll.setPreferredSize(new Dimension(0, 95));
 
         JPanel topPanel = new JPanel(new BorderLayout(5, 5));
         topPanel.add(inputPanel, BorderLayout.NORTH);
+        topPanel.add(lblSExplanation, BorderLayout.CENTER);
         topPanel.add(sqlScroll, BorderLayout.SOUTH);
         add(topPanel, BorderLayout.NORTH);
 
         tableModel = new DefaultTableModel(
-                new Object[]{"Phuong phap", "Ten thuat toan", "Cong thuc", "Chi phi (I/O)"},
-                0) {
+                new Object[]{"Phuong phap", "Ten thuat toan", "Cong thuc", "Chi phi (I/O)"}, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
@@ -115,13 +119,19 @@ public class SimulationPanel extends JPanel {
 
         lblRecommendation = new JLabel("Chon loai truy van va nhan Tinh chi phi.");
         lblRecommendation.setFont(new Font("Arial", Font.BOLD, 13));
-        lblRecommendation.setBorder(
-                BorderFactory.createEmptyBorder(10, 15, 10, 15));
+        lblRecommendation.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
         add(lblRecommendation, BorderLayout.SOUTH);
 
         cboQueryType.addActionListener(e -> updateQueryExample());
         btnCalculate.addActionListener(e -> calculateCosts());
         txtRecords.addActionListener(e -> updateQueryExample());
+        // Khi sua r, tu cap nhat s ngay sau khi roi khoi o nhap.
+        txtRecords.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusLost(java.awt.event.FocusEvent e) {
+                updateQueryExample();
+            }
+        });
 
         updateQueryExample();
     }
@@ -137,6 +147,7 @@ public class SimulationPanel extends JPanel {
                 WHERE Dno = 5 AND Salary > 30000 AND Sex = 'F';
                 """);
             txtMatchingRecords.setText("Khong ap dung");
+            lblSExplanation.setText("S7: Mo phong cac buoc loc AND, khong tinh s hay cong thuc I/O rieng.");
             txtRecords.setEnabled(false);
             txtBlocks.setEnabled(false);
             txtIndexHeight.setEnabled(false);
@@ -158,6 +169,7 @@ public class SimulationPanel extends JPanel {
             if (r <= 0) {
                 txtMatchingRecords.setText("");
                 txtSQLExample.setText("So ban ghi r phai lon hon 0.");
+                lblSExplanation.setText("Vui long nhap r > 0.");
                 lblRecommendation.setText("Vui long nhap r hop le.");
                 return;
             }
@@ -171,6 +183,7 @@ public class SimulationPanel extends JPanel {
                         WHERE Ssn = 10001;
                         """);
                     s = 1;
+                    lblSExplanation.setText("Cach tinh s: s = 1 (tim theo khoa duy nhat).");
                     break;
                 case 1:
                     txtSQLExample.setText("""
@@ -178,8 +191,8 @@ public class SimulationPanel extends JPanel {
                         FROM EMPLOYEE
                         WHERE Dno = 5;
                         """);
-                    // Gia dinh 5 phong ban va du lieu phan bo deu.
                     s = Math.max(1, r / 5);
+                    lblSExplanation.setText("Cach tinh s: s =  r / 5 (gia dinh 5 phong ban, phan bo deu).");
                     break;
                 case 2:
                     txtSQLExample.setText("""
@@ -187,8 +200,8 @@ public class SimulationPanel extends JPanel {
                         FROM EMPLOYEE
                         WHERE Ssn > 5000;
                         """);
-                    // Gia dinh 50% ban ghi thoa man.
                     s = Math.max(1, r / 2);
+                    lblSExplanation.setText("Cach tinh s: s =  r / 2 (gia dinh 50% ban ghi phu hop).");
                     break;
                 case 3:
                     txtSQLExample.setText("""
@@ -197,6 +210,7 @@ public class SimulationPanel extends JPanel {
                         WHERE Ssn = 10001;
                         """);
                     s = 1;
+                    lblSExplanation.setText("Cach tinh s: s = 1 (tim mot ban ghi theo khoa tren file sap xep).");
                     break;
                 default:
                     throw new IllegalStateException("Loai truy van khong hop le.");
@@ -206,6 +220,7 @@ public class SimulationPanel extends JPanel {
         } catch (NumberFormatException ex) {
             txtMatchingRecords.setText("");
             txtSQLExample.setText("Vui long nhap so ban ghi r hop le.");
+            lblSExplanation.setText("Khong tinh duoc s vi r khong hop le.");
             lblRecommendation.setText("Vui long nhap r hop le.");
         }
     }
@@ -215,7 +230,6 @@ public class SimulationPanel extends JPanel {
             showS7Simulation();
             return;
         }
-
         try {
             long r = Long.parseLong(txtRecords.getText().trim());
             long b = Long.parseLong(txtBlocks.getText().trim());
@@ -224,13 +238,11 @@ public class SimulationPanel extends JPanel {
             long s = Long.parseLong(txtMatchingRecords.getText().trim());
 
             if (r <= 0 || b <= 0 || x <= 0 || s <= 0 || s > r) {
-                throw new IllegalArgumentException(
-                        "Can r > 0, b > 0, x > 0 va 1 <= s <= r.");
+                throw new IllegalArgumentException("Can r > 0, b > 0, x > 0 va 1 <= s <= r.");
             }
 
             QueryStatistics stats = new QueryStatistics(r, b, x, s);
             List<CostResult> candidates = new ArrayList<>();
-
             switch (cboQueryType.getSelectedIndex()) {
                 case 0:
                     candidates.add(calculator.calculateS1(stats));
