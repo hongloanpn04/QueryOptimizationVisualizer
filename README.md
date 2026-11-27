@@ -73,3 +73,7 @@ và môi trường thực thi của SQL Server.
 - Hoàn thành chức năng kiểm tra Index.
 - Hoàn thành thực nghiệm Seek và Scan theo thuộc tính Ssn.
 - Các trường hợp thực nghiệm còn lại được phân chia cho thành viên khác.
+  
+## Video Demo
+
+[Xem hoặc tải video demo chương trình](demo/demo.mp4)
