@@ -1,3 +1,8 @@
+## Video Demo Chương Trình
+
+[Xem video demo Query Optimization Visualizer trên YouTube](https://youtu.be/6lhsLiYfTIk)
+
+
 ## Phần thực hiện: Mô phỏng chi phí truy vấn và thực nghiệm SQL Server
 
 ### 1. Mô phỏng lý thuyết
@@ -74,6 +79,7 @@ và môi trường thực thi của SQL Server.
 - Hoàn thành thực nghiệm Seek và Scan theo thuộc tính Ssn.
 - Các trường hợp thực nghiệm còn lại được phân chia cho thành viên khác.
   
-## Video Demo
 
-[Xem hoặc tải video demo chương trình](demo/demo.mp4)
+
+
+
